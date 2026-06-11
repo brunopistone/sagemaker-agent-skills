@@ -25,7 +25,7 @@ in `hyperpod.md` and `sizing.md`) — never to private or local-only resources.
 
 1. **Meet them where they are.** Don't lecture. Ask 2-3 plain questions, infer the
    rest, and produce something runnable fast. Explain each piece of jargon the
-   first time (e.g. "an _endpoint_ is just a hosted URL that runs your model").
+   first time (e.g. "an *endpoint* is just a hosted URL that runs your model").
 2. **Default to the easy path.** SageMaker AI managed jobs/endpoints are the
    default on-ramp. Steer to HyperPod only when scale/duration/resiliency justify
    it (see `decision-guide.md`).
@@ -55,15 +55,15 @@ newcomers, prefer a notebook in **SageMaker Studio** (a role + environment alrea
 exist there) over local CLI.
 
 **Step 1 — Capture intent.** Identify the workload (maps to a topic file):
-
-- Fine-tune an LLM → `llm-finetuning.md`
+- Fine-tune / customize an LLM, easiest no-infra path → `serverless-customization.md`
+- Fine-tune an LLM with a self-managed training job (custom script/instance) → `llm-finetuning.md`
 - Deploy / serve an LLM → `llm-inference.md`
 - Train a classic ML model (sklearn/XGBoost/PyTorch) → `classic-ml-training.md`
 - Deploy a classic ML model → `classic-ml-inference.md`
 - "Just make it accurate" / tabular data, no algorithm preference → `automl-autogluon.md`
 - Watch a deployed model for drift/quality over time → `model-monitor.md`
-  Also capture: which model (or "recommend one"), data location (or "none yet"),
-  and any scale hints (model size, dataset size, deadline).
+Also capture: which model (or "recommend one"), data location (or "none yet"),
+and any scale hints (model size, dataset size, deadline).
 
 **Step 2 — Pick the platform.** Use `decision-guide.md` for SageMaker AI (default)
 vs HyperPod, and (for HyperPod) Slurm vs EKS. State the choice and one-line reason.
@@ -71,6 +71,7 @@ vs HyperPod, and (for HyperPod) Slurm vs EKS. State the choice and one-line reas
 **Step 3 — Size the hardware.** Use `sizing.md` to recommend an instance type and,
 for big models, a parallelism/sharding approach. Say it plainly:
 "an `ml.g5.2xlarge` (one 24GB GPU) fits Llama 3 8B with QLoRA; ~X hours."
+(Skip this step for serverless customization — the service picks the compute.)
 
 **Step 4 — Prerequisites.** Walk through `prerequisites.md` for the chosen
 platform. Confirm IAM execution role, S3 bucket, region, and the **specific**
@@ -87,18 +88,19 @@ idle resources.
 
 ## Files in this skill (read on demand)
 
-| Need                                                                                         | File                        |
-| -------------------------------------------------------------------------------------------- | --------------------------- |
-| Correct-vs-wrong V3 patterns, container choice, CUDA/instance compat, pre-delivery checklist | `guardrails.md`             |
-| SM AI vs HyperPod, managed-job vs cluster, EKS vs Slurm                                      | `decision-guide.md`         |
-| IAM role, S3, region, quotas, Studio/local setup, cleanup                                    | `prerequisites.md`          |
-| Instance-type tables, memory rules-of-thumb, cost/time, AWS doc links                        | `sizing.md`                 |
-| Fine-tune an LLM (SFT/LoRA/QLoRA/DPO) with V3                                                | `llm-finetuning.md`         |
-| Deploy & invoke an LLM endpoint with V3                                                      | `llm-inference.md`          |
-| Train a classic ML model with V3                                                             | `classic-ml-training.md`    |
-| Deploy a classic ML model with V3                                                            | `classic-ml-inference.md`   |
-| AutoML on tabular/time-series/multimodal (AutoGluon)                                         | `automl-autogluon.md`       |
-| Monitor a deployed model (data/model quality, bias, attribution drift)                       | `model-monitor.md`          |
-| HyperPod overview: when to use it, Slurm vs EKS, prerequisites, recipes                      | `hyperpod.md`               |
-| HyperPod `hyp` CLI + SDK: install, cluster/training/inference commands & code                | `hyperpod-cli-reference.md` |
-| Ready-to-adapt runnable code                                                                 | `templates/`                |
+| Need | File |
+|---|---|
+| Correct-vs-wrong V3 patterns, container choice, CUDA/instance compat, pre-delivery checklist | `guardrails.md` |
+| SM AI vs HyperPod, managed-job vs cluster, EKS vs Slurm | `decision-guide.md` |
+| IAM role, S3, region, quotas, Studio/local setup, cleanup | `prerequisites.md` |
+| Instance-type tables, memory rules-of-thumb, cost/time, AWS doc links | `sizing.md` |
+| Serverless model customization (SFT/DPO/RLVR/RLAIF, no infra to manage) | `serverless-customization.md` |
+| Fine-tune an LLM via a self-managed training job (custom script/instance) | `llm-finetuning.md` |
+| Deploy & invoke an LLM endpoint with V3 | `llm-inference.md` |
+| Train a classic ML model with V3 | `classic-ml-training.md` |
+| Deploy a classic ML model with V3 | `classic-ml-inference.md` |
+| AutoML on tabular/time-series/multimodal (AutoGluon) | `automl-autogluon.md` |
+| Monitor a deployed model (data/model quality, bias, attribution drift) | `model-monitor.md` |
+| HyperPod overview: when to use it, Slurm vs EKS, prerequisites, recipes | `hyperpod.md` |
+| HyperPod `hyp` CLI + SDK: install, cluster/training/inference commands & code | `hyperpod-cli-reference.md` |
+| Ready-to-adapt runnable code | `templates/` |

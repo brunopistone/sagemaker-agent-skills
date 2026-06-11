@@ -1,6 +1,18 @@
 # Decision Guide: where should this run?
 
-Use this to make two choices for the user, in plain language.
+Use this to make the choices below for the user, in plain language.
+
+## Choice 0 (fine-tuning/customizing an LLM): how much infra to manage
+
+| Option | You manage | Pick when |
+| ------ | ---------- | --------- |
+| **Serverless model customization** (`serverless-customization.md`) | nothing — base model + dataset + technique | the base model & technique are supported; you want the easiest path, no instance/quota |
+| **Self-managed training job** (`llm-finetuning.md`) | instance type, training script/container | custom training logic, an unsupported model, or full control |
+| **HyperPod** (`hyperpod.md`) | a persistent cluster | very large/long runs needing resiliency |
+
+Default to **serverless customization** for newcomers fine-tuning a supported
+model — there's no hardware to size and no quota to request. Fall back to a
+self-managed job only when serverless can't express what they need.
 
 ## Choice 1: SageMaker AI vs HyperPod
 

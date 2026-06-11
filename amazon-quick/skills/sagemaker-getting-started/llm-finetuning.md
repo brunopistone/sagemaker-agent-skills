@@ -4,6 +4,12 @@ Goal: take an open model (Llama, Mistral, Qwen, Nova, ...) and adapt it to the
 user's data. Code uses SDK V3 (`sagemaker-train`). Full runnable template:
 `templates/finetune_sagemaker_job.py`.
 
+> **Easiest path first:** if the base model + technique are supported, prefer
+> **serverless model customization** (`serverless-customization.md`) — no
+> instance to size, no script to write, no quota to request. This file covers the
+> self-managed training-job path; reach for it when you need custom training
+> logic, an unsupported model, or full control over the compute.
+
 ## Questions to ask (plain language)
 
 1. **Which model?** If unsure, suggest a small open one (e.g. Llama 3 8B) —
@@ -68,27 +74,17 @@ Your `train.py` runs inside the container. Conventions to explain:
 - hyperparameters arrive as CLI args / env vars.
   Use any library inside (e.g. `transformers` + `peft` for LoRA/QLoRA).
 
-## Pattern B — built-in fine-tuning trainers (less code)
+## Pattern B — built-in fine-tuning trainers (serverless, least code)
 
-`sagemaker-train` ships higher-level trainers for common techniques:
+`sagemaker-train` ships higher-level trainers (`SFTTrainer`, `DPOTrainer`,
+`RLVRTrainer`, `RLAIFTrainer`) that run **serverless** — you pass a base model, a
+registered dataset, and a technique, and the service manages the compute (no
+`Compute(instance_type=...)`, no container). This is the recommended easy path.
 
-```python
-from sagemaker.train import SFTTrainer       # also DPOTrainer, RLVRTrainer, RLAIFTrainer
-from sagemaker.train.configs import Compute, InputData
-
-trainer = SFTTrainer(
-    model="meta-llama/Llama-3.1-8B",         # HuggingFace model ID
-    compute=Compute(instance_type="ml.g5.12xlarge", instance_count=1),
-    role=role,
-)
-trainer.train(
-    input_data_config=[InputData(channel_name="train", data_source="s3://my-bucket/data/train/")],
-    wait=True,
-)
-```
-
-(Exact constructor fields vary by trainer/version; if an arg is rejected, fall
-back to Pattern A with a `train.py`.)
+Because the API differs meaningfully from Pattern A (it uses a registered
+`DataSet` ARN and a `ModelPackageGroup`, not raw S3 channels), it has its own
+file: see **`serverless-customization.md`** for the full SFT/DPO/RLVR/RLAIF flow
+and a runnable example.
 
 ## Pattern C — launch a curated recipe as a managed job
 

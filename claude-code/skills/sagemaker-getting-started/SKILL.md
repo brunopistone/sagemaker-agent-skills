@@ -52,7 +52,8 @@ newcomers, prefer a notebook in **SageMaker Studio** (a role + environment alrea
 exist there) over local CLI.
 
 **Step 1 — Capture intent.** Identify the workload (maps to a topic file):
-- Fine-tune an LLM → `llm-finetuning.md`
+- Fine-tune / customize an LLM, easiest no-infra path → `serverless-customization.md`
+- Fine-tune an LLM with a self-managed training job (custom script/instance) → `llm-finetuning.md`
 - Deploy / serve an LLM → `llm-inference.md`
 - Train a classic ML model (sklearn/XGBoost/PyTorch) → `classic-ml-training.md`
 - Deploy a classic ML model → `classic-ml-inference.md`
@@ -67,6 +68,7 @@ vs HyperPod, and (for HyperPod) Slurm vs EKS. State the choice and one-line reas
 **Step 3 — Size the hardware.** Use `sizing.md` to recommend an instance type and,
 for big models, a parallelism/sharding approach. Say it plainly:
 "an `ml.g5.2xlarge` (one 24GB GPU) fits Llama 3 8B with QLoRA; ~X hours."
+(Skip this step for serverless customization — the service picks the compute.)
 
 **Step 4 — Prerequisites.** Walk through `prerequisites.md` for the chosen
 platform. Confirm IAM execution role, S3 bucket, region, and the **specific**
@@ -89,7 +91,8 @@ idle resources.
 | SM AI vs HyperPod, managed-job vs cluster, EKS vs Slurm | `decision-guide.md` |
 | IAM role, S3, region, quotas, Studio/local setup, cleanup | `prerequisites.md` |
 | Instance-type tables, memory rules-of-thumb, cost/time, AWS doc links | `sizing.md` |
-| Fine-tune an LLM (SFT/LoRA/QLoRA/DPO) with V3 | `llm-finetuning.md` |
+| Serverless model customization (SFT/DPO/RLVR/RLAIF, no infra to manage) | `serverless-customization.md` |
+| Fine-tune an LLM via a self-managed training job (custom script/instance) | `llm-finetuning.md` |
 | Deploy & invoke an LLM endpoint with V3 | `llm-inference.md` |
 | Train a classic ML model with V3 | `classic-ml-training.md` |
 | Deploy a classic ML model with V3 | `classic-ml-inference.md` |
