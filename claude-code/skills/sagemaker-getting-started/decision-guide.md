@@ -7,12 +7,16 @@ Use this to make the choices below for the user, in plain language.
 | Option | You manage | Pick when |
 | ------ | ---------- | --------- |
 | **Serverless model customization** (`serverless-customization.md`) | nothing — base model + dataset + technique | the base model & technique are supported; you want the easiest path, no instance/quota |
-| **Self-managed training job** (`llm-finetuning.md`) | instance type, training script/container | custom training logic, an unsupported model, or full control |
-| **HyperPod** (`hyperpod.md`) | a persistent cluster | very large/long runs needing resiliency |
+| **Managed job, your script** (`llm-finetuning.md` Option A) | instance type + a `train.py` | custom training logic or an unsupported model |
+| **Managed job from a recipe** (`llm-finetuning.md` Option B) | instance type | a curated recipe fits your model/technique |
+| **HyperPod recipe job** (`hyperpod.md`) | a persistent cluster | big/long runs; the same recipe on a resilient cluster |
+| **HyperPod custom PyTorch job** (`hyperpod-cli-reference.md`) | cluster + your container/script | custom code at scale on a resilient cluster |
 
-Default to **serverless customization** for newcomers fine-tuning a supported
-model — there's no hardware to size and no quota to request. Fall back to a
-self-managed job only when serverless can't express what they need.
+The first three are **managed (no cluster)**; the last two run on a **HyperPod
+cluster** you provision and keep running. Default to **serverless customization**
+for newcomers fine-tuning a supported model — no hardware to size, no quota to
+request. Move down the list only when you need more control or scale; reach for
+HyperPod only when a managed job isn't enough.
 
 ## Choice 1: SageMaker AI vs HyperPod
 

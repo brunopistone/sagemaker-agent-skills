@@ -4,12 +4,6 @@ Goal: take an open model (Llama, Mistral, Qwen, Nova, ...) and adapt it to the
 user's data. Code uses SDK V3 (`sagemaker-train`). Full runnable template:
 `templates/finetune_sagemaker_job.py`.
 
-> **Easiest path first:** if the base model + technique are supported, prefer
-> **serverless model customization** (`serverless-customization.md`) — no
-> instance to size, no script to write, no quota to request. This file covers the
-> self-managed training-job path; reach for it when you need custom training
-> logic, an unsupported model, or full control over the compute.
-
 ## Questions to ask (plain language)
 
 1. **Which model?** If unsure, suggest a small open one (e.g. Llama 3 8B) —
@@ -21,12 +15,28 @@ user's data. Code uses SDK V3 (`sagemaker-train`). Full runnable template:
    - "full quality, big GPUs available" → full fine-tuning
 3. **Data?** Where is it, what format (commonly JSONL of prompt/response)? If they
    have none, offer a tiny public example dataset to prove the pipeline first.
-4. **Scale/urgency?** Feeds the sizing step.
+4. **Scale/urgency?** Drives which option below, and (for managed jobs) the sizing step.
 
-## Size first
+## Pick the option (easiest first)
 
-Use `sizing.md` to pick an instance from the model size + technique, e.g.
-"Llama 3 8B + QLoRA → ~4 GB → `ml.g5.2xlarge`". State instance type and rough time.
+| # | Option | You manage | Use when |
+|---|--------|-----------|----------|
+| 1 | **Serverless customization** (`serverless-customization.md`) | nothing — base model + dataset + technique | the base model & technique are supported; you want the easiest path |
+| 2 | **Managed job, your script** (Option A below) | instance type + a `train.py` | custom training logic or an unsupported model |
+| 3 | **Managed job from a recipe** (Option B below) | instance type | a curated recipe fits your model/technique |
+| 4 | **HyperPod recipe job** (`hyperpod.md`) | a persistent cluster | big/long runs; same recipe, on a resilient cluster |
+| 5 | **HyperPod custom PyTorch job** (Option C below) | cluster + your container/script | custom code at scale on a resilient cluster |
+
+Options 1–3 are **managed (no cluster)**; 4–5 run on a **HyperPod cluster** you
+provision and keep running. Default to **#1 serverless** for newcomers; move down
+the list only when you need more control or scale.
+
+## Size first (managed jobs only)
+
+For Options A/B (and HyperPod), use `sizing.md` to pick an instance from the model
+size + technique, e.g. "Llama 3 8B + QLoRA → ~4 GB → `ml.g5.2xlarge`". State
+instance type and rough time. (Serverless customization skips this — the service
+picks the compute.)
 
 ## Install
 
@@ -34,7 +44,9 @@ Use `sizing.md` to pick an instance from the model size + technique, e.g.
 pip install sagemaker-train   # pulls sagemaker-core; add sagemaker-serve to deploy
 ```
 
-## Pattern A — `ModelTrainer` with your own training script (most flexible)
+## Option A — managed job, `ModelTrainer` with your own training script
+
+Most flexible managed path: you bring a `train.py` and pick the instance.
 
 ```python
 from sagemaker.train import ModelTrainer, Mode
@@ -74,19 +86,7 @@ Your `train.py` runs inside the container. Conventions to explain:
 - hyperparameters arrive as CLI args / env vars.
   Use any library inside (e.g. `transformers` + `peft` for LoRA/QLoRA).
 
-## Pattern B — built-in fine-tuning trainers (serverless, least code)
-
-`sagemaker-train` ships higher-level trainers (`SFTTrainer`, `DPOTrainer`,
-`RLVRTrainer`, `RLAIFTrainer`) that run **serverless** — you pass a base model, a
-registered dataset, and a technique, and the service manages the compute (no
-`Compute(instance_type=...)`, no container). This is the recommended easy path.
-
-Because the API differs meaningfully from Pattern A (it uses a registered
-`DataSet` ARN and a `ModelPackageGroup`, not raw S3 channels), it has its own
-file: see **`serverless-customization.md`** for the full SFT/DPO/RLVR/RLAIF flow
-and a runnable example.
-
-## Pattern C — launch a curated recipe as a managed job
+## Option B — managed job from a curated recipe
 
 ```python
 trainer = ModelTrainer.from_recipe(
@@ -97,8 +97,23 @@ trainer = ModelTrainer.from_recipe(
 trainer.train(input_data_config=[...], wait=True)
 ```
 
-The same recipe families also run on **HyperPod** for big/long jobs — see
-`hyperpod.md`.
+The same recipe families also run on **HyperPod** (Option below / `hyperpod.md`).
+
+## Option C — fine-tune on a HyperPod cluster
+
+For big/long/failure-prone runs on a **persistent, resilient cluster** (you must
+already have a HyperPod cluster — see `hyperpod.md` for when/how). Two ways:
+
+- **Recipe job** — `hyp create hyp-recipe-job ...`: the same curated recipes as
+  Option B, driven on the cluster.
+- **Custom PyTorch job** — `hyp create hyp-pytorch-job ...` (SDK:
+  `HyperPodPytorchJob`): bring your own PyTorch training code/container, the
+  HyperPod analogue of Option A. Supports multi-node, GPU/Neuron/EFA, and
+  auto-resume on node failure.
+
+Full commands and SDK usage are in **`hyperpod-cli-reference.md`**. Pick HyperPod
+only when a managed job (Options 1–3) isn't enough — it's a cluster you own and
+pay for while it runs.
 
 ## Prerequisites specific to fine-tuning
 
