@@ -7,8 +7,8 @@ Use this to make the choices below for the user, in plain language.
 | Option | You manage | Pick when |
 | ------ | ---------- | --------- |
 | **Serverless model customization** (`serverless-customization.md`) | nothing — base model + dataset + technique | the base model & technique are supported; you want the easiest path, no instance/quota |
-| **Managed job, your script** (`llm-finetuning.md` Option A) | instance type + a `train.py` | custom training logic or an unsupported model |
-| **Managed job from a recipe** (`llm-finetuning.md` Option B) | instance type | a curated recipe fits your model/technique |
+| **Managed job, your script** (`llm-finetuning.md` Option 2) | instance type + a `train.py` | custom training logic or an unsupported model |
+| **Managed job from a recipe** (`llm-finetuning.md` Option 3) | instance type | a curated recipe fits your model/technique |
 | **HyperPod recipe job** (`hyperpod.md`) | a persistent cluster | big/long runs; the same recipe on a resilient cluster |
 | **HyperPod custom PyTorch job** (`hyperpod-cli-reference.md`) | cluster + your container/script | custom code at scale on a resilient cluster |
 

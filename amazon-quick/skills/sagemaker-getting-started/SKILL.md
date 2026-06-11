@@ -56,7 +56,7 @@ exist there) over local CLI.
 
 **Step 1 — Capture intent.** Identify the workload (maps to a topic file):
 - Fine-tune / customize an LLM, easiest no-infra path → `serverless-customization.md`
-- Fine-tune an LLM with a self-managed training job (custom script/instance) → `llm-finetuning.md`
+- Fine-tune an LLM with a training job or HyperPod (own script, recipe, or cluster) → `llm-finetuning.md`
 - Deploy / serve an LLM → `llm-inference.md`
 - Train a classic ML model (sklearn/XGBoost/PyTorch) → `classic-ml-training.md`
 - Deploy a classic ML model → `classic-ml-inference.md`
@@ -95,7 +95,7 @@ idle resources.
 | IAM role, S3, region, quotas, Studio/local setup, cleanup | `prerequisites.md` |
 | Instance-type tables, memory rules-of-thumb, cost/time, AWS doc links | `sizing.md` |
 | Serverless model customization (SFT/DPO/RLVR/RLAIF, no infra to manage) | `serverless-customization.md` |
-| Fine-tune an LLM via a self-managed training job (custom script/instance) | `llm-finetuning.md` |
+| Fine-tune an LLM via a training job or HyperPod (own script, recipe, or cluster) | `llm-finetuning.md` |
 | Deploy & invoke an LLM endpoint with V3 | `llm-inference.md` |
 | Train a classic ML model with V3 | `classic-ml-training.md` |
 | Deploy a classic ML model with V3 | `classic-ml-inference.md` |

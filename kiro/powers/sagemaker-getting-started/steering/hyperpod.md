@@ -67,7 +67,7 @@ HyperPod-Slurm, **or** SageMaker AI managed training jobs.
 - Launch flows: edit the recipe + cluster config and run the repo's launcher
   scripts (Slurm or k8s), or launch via the SDK
   (`ModelTrainer.from_recipe(...)` for a managed job — see `llm-finetuning.md`
-  Option B).
+  Option 3).
 
 ## Prerequisites (in addition to `prerequisites.md`)
 

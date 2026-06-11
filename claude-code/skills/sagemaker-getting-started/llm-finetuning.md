@@ -22,21 +22,24 @@ user's data. Code uses SDK V3 (`sagemaker-train`). Full runnable template:
 | # | Option | You manage | Use when |
 |---|--------|-----------|----------|
 | 1 | **Serverless customization** (`serverless-customization.md`) | nothing — base model + dataset + technique | the base model & technique are supported; you want the easiest path |
-| 2 | **Managed job, your script** (Option A below) | instance type + a `train.py` | custom training logic or an unsupported model |
-| 3 | **Managed job from a recipe** (Option B below) | instance type | a curated recipe fits your model/technique |
-| 4 | **HyperPod recipe job** (`hyperpod.md`) | a persistent cluster | big/long runs; same recipe, on a resilient cluster |
-| 5 | **HyperPod custom PyTorch job** (Option C below) | cluster + your container/script | custom code at scale on a resilient cluster |
+| 2 | **Managed job, your script** (Option 2 below) | instance type + a `train.py` | custom training logic or an unsupported model |
+| 3 | **Managed job from a recipe** (Option 3 below) | instance type | a curated recipe fits your model/technique |
+| 4 | **HyperPod cluster** (Option 4 below) | a persistent cluster | big/long/failure-prone runs needing resiliency — via a recipe or your own PyTorch code |
 
-Options 1–3 are **managed (no cluster)**; 4–5 run on a **HyperPod cluster** you
-provision and keep running. Default to **#1 serverless** for newcomers; move down
-the list only when you need more control or scale.
+Options 1–3 are **managed (no cluster)**; Option 4 runs on a **HyperPod cluster**
+you provision and keep running (and itself offers a recipe job or a custom
+PyTorch job). Default to **#1 serverless** for newcomers; move down the list only
+when you need more control or scale.
+
+Option 1 (serverless) has its own file (`serverless-customization.md`); Options
+2–4 are detailed below.
 
 ## Size first (managed jobs only)
 
-For Options A/B (and HyperPod), use `sizing.md` to pick an instance from the model
-size + technique, e.g. "Llama 3 8B + QLoRA → ~4 GB → `ml.g5.2xlarge`". State
-instance type and rough time. (Serverless customization skips this — the service
-picks the compute.)
+For Options 2–4, use `sizing.md` to pick an instance from the model size +
+technique, e.g. "Llama 3 8B + QLoRA → ~4 GB → `ml.g5.2xlarge`". State instance
+type and rough time. (Option 1, serverless, skips this — the service picks the
+compute.)
 
 ## Install
 
@@ -44,7 +47,7 @@ picks the compute.)
 pip install sagemaker-train   # pulls sagemaker-core; add sagemaker-serve to deploy
 ```
 
-## Option A — managed job, `ModelTrainer` with your own training script
+## Option 2 — managed job, `ModelTrainer` with your own training script
 
 Most flexible managed path: you bring a `train.py` and pick the instance.
 
@@ -86,7 +89,7 @@ Your `train.py` runs inside the container. Conventions to explain:
 - hyperparameters arrive as CLI args / env vars.
   Use any library inside (e.g. `transformers` + `peft` for LoRA/QLoRA).
 
-## Option B — managed job from a curated recipe
+## Option 3 — managed job from a curated recipe
 
 ```python
 trainer = ModelTrainer.from_recipe(
@@ -97,18 +100,18 @@ trainer = ModelTrainer.from_recipe(
 trainer.train(input_data_config=[...], wait=True)
 ```
 
-The same recipe families also run on **HyperPod** (Option below / `hyperpod.md`).
+The same recipe families also run on **HyperPod** (Option 4 below / `hyperpod.md`).
 
-## Option C — fine-tune on a HyperPod cluster
+## Option 4 — fine-tune on a HyperPod cluster
 
 For big/long/failure-prone runs on a **persistent, resilient cluster** (you must
 already have a HyperPod cluster — see `hyperpod.md` for when/how). Two ways:
 
 - **Recipe job** — `hyp create hyp-recipe-job ...`: the same curated recipes as
-  Option B, driven on the cluster.
+  Option 3, driven on the cluster.
 - **Custom PyTorch job** — `hyp create hyp-pytorch-job ...` (SDK:
   `HyperPodPytorchJob`): bring your own PyTorch training code/container, the
-  HyperPod analogue of Option A. Supports multi-node, GPU/Neuron/EFA, and
+  HyperPod analogue of Option 2. Supports multi-node, GPU/Neuron/EFA, and
   auto-resume on node failure.
 
 Full commands and SDK usage are in **`hyperpod-cli-reference.md`**. Pick HyperPod

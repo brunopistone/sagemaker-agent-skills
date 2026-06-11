@@ -74,7 +74,7 @@ Load only the file(s) relevant to the task — do not read all of them upfront.
 - **Prerequisites: IAM role, S3, region, quotas, Studio/local setup, cleanup** -> `prerequisites.md`
 - **Instance-type tables, memory rules-of-thumb, cost/time, AWS doc links** -> `sizing.md`
 - **Serverless model customization (SFT/DPO/RLVR/RLAIF, no infra to manage) — the easiest fine-tuning path** -> `serverless-customization.md`
-- **Fine-tuning an LLM via a self-managed training job (custom script/instance)** -> `llm-finetuning.md`
+- **Fine-tuning an LLM via a training job or HyperPod (own script, recipe, or cluster)** -> `llm-finetuning.md`
 - **Deploying & invoking an LLM endpoint with V3** -> `llm-inference.md`
 - **Training a classic ML model (sklearn/XGBoost/PyTorch) with V3** -> `classic-ml-training.md`
 - **Deploying a classic ML model with V3** -> `classic-ml-inference.md`
