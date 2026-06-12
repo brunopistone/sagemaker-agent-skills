@@ -24,6 +24,10 @@ HyperPod only when a managed job isn't enough.
 cluster to provision, compute spins up per job and tears down automatically, you
 pay only while it runs.
 
+> Multi-team capacity sharing? You can keep managed training jobs **and** add
+> queuing/prioritization/fair-share across teams with AWS Batch — see
+> `job-governance.md`. That's orthogonal to the SM-AI-vs-HyperPod choice.
+
 | Pick **SageMaker AI** (managed) when...    | Pick **HyperPod** when...                                            |
 | ------------------------------------------ | -------------------------------------------------------------------- |
 | One-off or occasional training/fine-tuning | Long-running, multi-day/multi-week training                          |

@@ -80,6 +80,7 @@ Load only the file(s) relevant to the task — do not read all of them upfront.
 - **Deploying a classic ML model with V3** -> `classic-ml-inference.md`
 - **AutoML on tabular/time-series/multimodal data (AutoGluon)** -> `automl-autogluon.md`
 - **Monitoring a deployed model (data/model quality, bias, attribution drift)** -> `model-monitor.md`
+- **Job governance: queue/prioritize/fair-share training jobs across teams (AWS Batch)** -> `job-governance.md`
 - **HyperPod overview: when to use it, Slurm vs EKS, prerequisites, recipes** -> `hyperpod.md`
 - **HyperPod `hyp` CLI + SDK: install, cluster/training/inference commands & code** -> `hyperpod-cli-reference.md`
 - **Ready-to-adapt runnable code** -> `templates/`

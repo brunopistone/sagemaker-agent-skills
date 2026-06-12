@@ -89,3 +89,40 @@ In container at runtime:
 - `plot_training_metrics()` / `get_available_metrics()` - MLflow metrics visualization
 - `get_studio_url()` / `get_mlflow_url()` - URL helpers for monitoring jobs
 - Configurable `poll_interval` parameter on all trainers for job status observability
+
+## AWS Batch job queues (`sagemaker.train.aws_batch`)
+
+Submit a training job to an **AWS Batch** queue (job governance: queuing,
+priority, fair-share, quota management) instead of running it immediately.
+Requires `sagemaker>=3.7`. The Batch queue dispatches the job to a SageMaker
+service environment when capacity is available; the training payload is unchanged.
+
+| Class / helper | Module | Purpose |
+|----------------|--------|---------|
+| `TrainingQueue` | `aws_batch/training_queue.py` | Wraps a Batch job queue; `submit(...)`, `list_jobs(status=...)` |
+| `TrainingQueuedJob` | `aws_batch/training_queued_job.py` | A submitted job; `describe()`, `terminate()`, `update(scheduling_priority=...)` |
+| `get_batch_boto_client` | `aws_batch/boto_client.py` | Batch boto3 client (e.g. `get_job_queue_snapshot`) |
+
+```python
+from sagemaker.train.aws_batch.training_queue import TrainingQueue
+
+queue = TrainingQueue("team-b-queue")
+queued_job = queue.submit(
+    model_trainer,                 # a ModelTrainer
+    data,                          # list[InputData] channels
+    job_name,
+    share_identifier="HIGHPRI",    # required for fair-share queues
+    priority=1,
+)
+queue.list_jobs(status="RUNNABLE")   # SUBMITTED/RUNNABLE/STARTING/RUNNING/SUCCEEDED/FAILED
+queued_job.describe()                # status, jobName, ...
+queued_job.terminate()               # cancel an in-queue job
+```
+
+The Batch resources (service environment, job queue, scheduling policy, quota
+share) are created with the **AWS Batch APIs** (boto3 `create_service_environment`
+/ `create_job_queue` / `create_scheduling_policy` / `create_quota_share`), not the
+SageMaker SDK. Service environment type is `SAGEMAKER_TRAINING`; queue types are
+FIFO, fair-share, and quota-management. IAM: `batch:SubmitServiceJob` (scoped to
+the queue ARN) + `iam:PassRole` to `sagemaker.amazonaws.com`; the service-linked
+role `AWSServiceRoleForAWSBatchWithSagemaker` is auto-created on first use.
