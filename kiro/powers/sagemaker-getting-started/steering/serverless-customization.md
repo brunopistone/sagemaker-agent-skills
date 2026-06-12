@@ -22,8 +22,11 @@ hardware to size or quota to request.
 
 - **SFT** — supervised fine-tuning on prompt/response data
 - **DPO** — direct preference optimization (chosen/rejected pairs)
-- **RLVR** — RL from verifiable rewards (needs a reward function, registered as a SageMaker Hub Evaluator ARN)
-- **RLAIF** — RL from AI feedback (built-in or custom judge prompt)
+- **RLVR** — RL from verifiable rewards; uses rule-based reward verification, so
+  it takes **no extra reward-function argument** (just the dataset + hyperparameters)
+- **RLAIF** — RL from AI feedback: a judge LLM scores outputs. Needs a
+  `reward_model_id` (e.g. a hosted judge model) and a `reward_prompt` (an
+  `Evaluator` registered in the AI Registry — pass its `.arn`)
 - Nova models additionally support CPT/RFT variants
 
 ## What you need first
@@ -77,17 +80,21 @@ except ClientError as e:
     else:
         raise
 
-dataset = DataSet.create(name=MODEL_PACKAGE_GROUP_NAME, source=TRAINING_DATA_S3, wait=True)
+# Register a dataset in the AI Registry (DataSet.create), or fetch an already-
+# registered one with DataSet.get(name=...). Both return a DataSet object.
+train_dataset = DataSet.create(name=f"{MODEL_PACKAGE_GROUP_NAME}-train", source=TRAINING_DATA_S3, wait=True)
+val_dataset   = DataSet.get(name=f"{MODEL_PACKAGE_GROUP_NAME}-val")   # if you registered one
 
 # 2. Configure the trainer — note: NO instance type, NO container, NO compute config
 trainer = SFTTrainer(
     model=BASE_MODEL,
     training_type=TrainingType.LORA,             # or full fine-tuning
     model_package_group=model_package_group,
-    training_dataset=dataset.arn,                # a registered DataSet ARN, not a raw S3 path
+    training_dataset=train_dataset,              # pass the DataSet object (its .arn also works)
+    validation_dataset=val_dataset,              # optional but used throughout the AWS workshops
     s3_output_path=S3_OUTPUT_PATH,
     sagemaker_session=sagemaker_session,
-    # accept_eula=ACCEPT_EULA,                    # uncomment for Meta/Llama models
+    accept_eula=True,                            # required for gated (e.g. Meta/Llama) models
     role=ROLE_ARN,
 )
 
@@ -101,26 +108,53 @@ training_job = trainer.train(wait=True)
 print(training_job.training_job_name, training_job.training_job_status)
 ```
 
-DPO/RLVR/RLAIF follow the same shape with their own trainer
-(`DPOTrainer`, `RLVRTrainer`, `RLAIFTrainer`) and dataset format. RLVR also needs
-a reward function registered as a SageMaker Hub **Evaluator ARN**
-(`CUSTOM_REWARD_FUNCTION`).
+DPO / RLVR / RLAIF use their own trainer with the same shape:
+
+```python
+from sagemaker.train.dpo_trainer import DPOTrainer
+from sagemaker.train.rlvr_trainer import RLVRTrainer
+from sagemaker.train.rlaif_trainer import RLAIFTrainer
+from sagemaker.ai_registry.evaluator import Evaluator
+
+# DPO — chosen/rejected preference pairs; same args as SFT (no training_type needed by default)
+dpo = DPOTrainer(model=BASE_MODEL, model_package_group=model_package_group,
+                 training_dataset=train_dataset, validation_dataset=val_dataset,
+                 s3_output_path=S3_OUTPUT_PATH, sagemaker_session=sagemaker_session,
+                 accept_eula=True, role=ROLE_ARN)
+
+# RLVR — rule-based verifiable rewards; NO reward-model/function argument
+rlvr = RLVRTrainer(model=BASE_MODEL, model_package_group=model_package_group,
+                   training_dataset=train_dataset, validation_dataset=val_dataset,
+                   s3_output_path=S3_OUTPUT_PATH, sagemaker_session=sagemaker_session,
+                   accept_eula=True, role=ROLE_ARN)
+
+# RLAIF — a judge LLM scores outputs: needs reward_model_id + a reward_prompt Evaluator ARN
+reward_prompt = Evaluator.get(name="my-reward-prompt")
+rlaif = RLAIFTrainer(model=BASE_MODEL, model_package_group=model_package_group,
+                     reward_model_id="openai.gpt-oss-120b-1:0",   # a hosted judge model
+                     reward_prompt=reward_prompt.arn,
+                     training_dataset=train_dataset,
+                     s3_output_path=S3_OUTPUT_PATH, sagemaker_session=sagemaker_session,
+                     accept_eula=True, role=ROLE_ARN)
+```
 
 ## Key differences from the self-managed training-job path
 
 - **No `Compute(instance_type=...)`** and no `training_image` — that's the whole
   point. Don't add them; the serverless trainer manages compute.
-- Inputs are a **registered `DataSet` ARN** and a **`ModelPackageGroup`**, not raw
-  S3 channels passed to `.train(input_data_config=[...])`.
+- Inputs are a **registered `DataSet`** (object or its `.arn`) and a
+  **`ModelPackageGroup`**, not raw S3 channels passed to `.train(input_data_config=[...])`.
 - The result is registered as a **model package** in the group, ready to deploy
   (see `llm-inference.md`).
 
 ## EULA (gated models)
 
-For Meta/Llama base models you must accept the license: show the user the license
-link, get explicit confirmation, then set `ACCEPT_EULA = True` and uncomment the
-`accept_eula=ACCEPT_EULA` argument. Non-Meta models: inform the user of the
-license but omit the `accept_eula` argument entirely.
+For gated base models (e.g. Meta/Llama) you must accept the license: show the
+user the license link, get explicit confirmation, and only then pass
+`accept_eula=True` (training fails without it). For non-gated models, inform the
+user of the license; `accept_eula=True` is harmless but you may omit it.
+The `ACCEPT_EULA` constant in the example just makes this an explicit, reviewable
+choice rather than a silent default.
 
 ## Watch, verify, deploy
 

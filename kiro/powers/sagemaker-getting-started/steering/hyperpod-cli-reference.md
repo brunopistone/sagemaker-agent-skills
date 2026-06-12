@@ -73,7 +73,21 @@ Stack creation installs an umbrella **Helm chart** with operators for training,
 inference, health monitoring, job auto-restart, GPU/Neuron/EFA device plugins,
 MPI, MLflow, and more — this is what makes a HyperPod EKS cluster "ready to train".
 
-## Run a training job
+## Two ways to run training on HyperPod-EKS
+
+There are **two distinct ways** to launch training on a HyperPod EKS cluster —
+pick one:
+
+1. **The `hyp` CLI / SDK** (below) — AWS's abstraction; generates the CRD for you
+   and adds logs/exec/quota helpers. Easiest if you have `hyp` set up.
+2. **Raw `kubectl` + a Kubeflow `PyTorchJob`** (see "Train via kubectl" below) —
+   you write a pod manifest and `kubectl apply` it. This is what several AWS
+   workshops use; lower-level but no `hyp` dependency.
+
+Both ultimately run a training operator on the cluster. Use whichever matches the
+user's tooling; don't imply `hyp` is the only option.
+
+## Run a training job — via `hyp`
 
 ```bash
 hyp create hyp-pytorch-job \
@@ -127,6 +141,73 @@ to fine-tune/pretrain a supported model without hand-writing the training config
 hyp init hyp-recipe-job      # scaffold; pick a recipe + cluster settings
 hyp create hyp-recipe-job ...
 ```
+
+## Train via kubectl (Kubeflow PyTorchJob) — the no-`hyp` path
+
+If you'd rather not use `hyp`, launch training by applying a **Kubeflow
+`PyTorchJob`** manifest with `kubectl`. This is the pattern in several AWS
+workshops: a pod runs `torchrun` over your `train.py`, reading data/writing the
+model on a mounted **FSx for Lustre** volume.
+
+```yaml
+# pod-finetuning.yaml
+apiVersion: "kubeflow.org/v1"
+kind: PyTorchJob                      # the Kubeflow CRD (NOT HyperPodPyTorchJob)
+metadata:
+  name: qwen3-4b-sft
+spec:
+  elasticPolicy:
+    rdzvBackend: c10d
+    minReplicas: 1
+    maxReplicas: 1
+    maxRestarts: 3
+  pytorchReplicaSpecs:
+    Worker:
+      replicas: 1
+      restartPolicy: OnFailure
+      template:
+        spec:
+          volumes:
+            - name: fsx-volume
+              persistentVolumeClaim:
+                claimName: fsx-claim          # an FSx for Lustre PVC
+          containers:
+            - name: pytorch
+              image: 763104351884.dkr.ecr.us-east-1.amazonaws.com/pytorch-training:2.8.0-gpu-py312-cu129-ubuntu22.04-ec2
+              resources:
+                requests: { nvidia.com/gpu: 4 }
+                limits:   { nvidia.com/gpu: 4 }
+              command:
+                - /bin/bash
+                - -c
+                - |
+                  pip install --no-cache-dir -r /data/shared/<job>/requirements.txt && \
+                  torchrun --nnodes=1 --nproc_per_node=4 \
+                    --rdzv_backend=c10d --rdzv_endpoint=${PET_RDZV_ENDPOINT} \
+                    --rdzv_id=qwen3-4b-sft --max_restarts=3 \
+                    /data/shared/<job>/scripts/train.py \
+                    --config /data/shared/<job>/args.yaml
+              volumeMounts:
+                - { name: fsx-volume, mountPath: /data }
+```
+
+```bash
+kubectl apply -f pod-finetuning.yaml
+kubectl get pytorchjob qwen3-4b-sft
+kubectl logs -f qwen3-4b-sft-worker-0
+```
+
+- The training **operator must be installed** on the cluster (the HyperPod EKS
+  Helm chart includes training operators). `train.py` here is an ordinary
+  transformers/TRL/PEFT FSDP script reading from the FSx mount.
+- An `args.yaml` carries the training config (model id, FSx data/output paths,
+  `fsdp` settings); a separate `deployment.yaml` (kind `InferenceEndpointConfig`,
+  `inference.sagemaker.aws.amazon.com/v1alpha1`) deploys the result with a vLLM
+  image — that's the HyperPod **inference operator**, distinct from the `hyp`
+  endpoint commands above.
+
+Exact CRD apiVersions, image tags, and operator availability are version- and
+cluster-specific — confirm against your cluster and current AWS workshop/docs.
 
 ## Deploy & invoke inference
 
