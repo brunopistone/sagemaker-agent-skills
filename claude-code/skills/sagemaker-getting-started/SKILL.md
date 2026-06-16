@@ -60,6 +60,7 @@ exist there) over local CLI.
 - "Just make it accurate" / tabular data, no algorithm preference → `automl-autogluon.md`
 - Watch a deployed model for drift/quality over time → `model-monitor.md`
 - Queue/prioritize/fair-share training jobs across teams (AWS Batch) → `job-governance.md`
+- Validate a GPU cluster (EFA/NCCL/GPU health) before an expensive run → `cluster-health-check.md`
 Also capture: which model (or "recommend one"), data location (or "none yet"),
 and any scale hints (model size, dataset size, deadline).
 
@@ -100,6 +101,7 @@ idle resources.
 | AutoML on tabular/time-series/multimodal (AutoGluon) | `automl-autogluon.md` |
 | Monitor a deployed model (data/model quality, bias, attribution drift) | `model-monitor.md` |
 | Job governance: queue/prioritize/fair-share training jobs across teams (AWS Batch) | `job-governance.md` |
+| Pre-flight cluster health check (GPU/EFA/NCCL/DCGM) before a big training run | `cluster-health-check.md` |
 | HyperPod overview: when to use it, Slurm vs EKS, prerequisites, recipes | `hyperpod.md` |
 | HyperPod `hyp` CLI + SDK: install, cluster/training/inference commands & code | `hyperpod-cli-reference.md` |
 | Ready-to-adapt runnable code | `templates/` |
